@@ -26,13 +26,13 @@ fn compress_data(
                 compression::compress(compression, &buffer, &mut compressed_buffer)?;
             }
             DataPageHeader::V2(header) => {
-                let levels_byte_length = (header.repetition_levels_byte_length
+              /*  let levels_byte_length = (header.repetition_levels_byte_length
                     + header.definition_levels_byte_length)
                     as usize;
-                compressed_buffer.extend_from_slice(&buffer[..levels_byte_length]);
+                compressed_buffer.extend_from_slice(&buffer[..levels_byte_length]);*/
                 compression::compress(
                     compression,
-                    &buffer[levels_byte_length..],
+                    &buffer,
                     &mut compressed_buffer,
                 )?;
             }

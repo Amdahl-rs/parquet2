@@ -1,3 +1,4 @@
+use zstd::zstd_safe;
 pub use super::parquet_bridge::Compression;
 
 use crate::error::{ParquetError, Result};
@@ -84,15 +85,18 @@ pub fn compress(
         )),
         #[cfg(feature = "zstd")]
         Compression::Zstd => {
-            use std::io::Write;
-            /// Compression level (1-21) for ZSTD. Choose 1 here for better compression speed.
-            const ZSTD_COMPRESSION_LEVEL: i32 = 1;
+            // let output_buf_len = output_buf.len();
+            let required_len = input_buf.len();
+            //  output_buf.resize(output_buf_len + required_len, 0);
+            output_buf.resize(required_len, 0);
 
-            let mut encoder = zstd::Encoder::new(output_buf, ZSTD_COMPRESSION_LEVEL)?;
-            encoder.write_all(input_buf)?;
-            match encoder.finish() {
-                Ok(_) => Ok(()),
-                Err(e) => Err(e.into()),
+            let written = zstd_safe::compress(output_buf, input_buf, 1);
+            match written {
+                Ok(n) => {
+                    output_buf.truncate(n);
+                    Ok(())
+                }
+                Err(_e) => Err(general_err!("Compressing  Zstd compression is not valid")),
             }
         }
         #[cfg(not(feature = "zstd"))]
